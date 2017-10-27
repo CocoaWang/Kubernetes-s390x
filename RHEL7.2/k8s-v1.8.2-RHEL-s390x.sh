@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Write by Chenhao Xu
+# Written by Chenhao Xu
 
 # Install kubernetes with kubeadm v1.8.2 on RHEL7.2 s390x
 # You need a good network environment.
@@ -11,16 +11,6 @@ set -e
 
 # Kubernetes version
 K8S_VERSION=v1.8.2
-
-# Clear firewall rules
-echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
-iptables -F
-iptables -X
-iptables -Z
-iptables -P INPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -P OUTPUT ACCEPT
-echo "Done!"
 
 # Turn off swap
 echo -e "\n\n*************\nTurn off swap\n*************\n\n"
@@ -144,6 +134,16 @@ subjects:
   namespace: kube-system
 EOF
 kubectl create -f $HOME/k8s-${K8S_VERSION}/custom-rbac-role.yaml
+
+# Clear firewall rules
+echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
+iptables -F
+iptables -X
+iptables -Z
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+echo "Done!"
 
 echo -e "\n\n*****************************************"
 echo -e "Kubernetes v1.8.2 installed successfully!"
