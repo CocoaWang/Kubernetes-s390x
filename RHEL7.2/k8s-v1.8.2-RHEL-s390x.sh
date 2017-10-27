@@ -12,6 +12,11 @@ set -e
 # Kubernetes version
 K8S_VERSION=v1.8.2
 
+# Clear firewall rules
+echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
+iptables -F
+echo "Done!"
+
 # Turn off swap
 echo -e "\n\n*************\nTurn off swap\n*************\n\n"
 swapoff -a
@@ -135,15 +140,10 @@ subjects:
 EOF
 kubectl create -f $HOME/k8s-${K8S_VERSION}/custom-rbac-role.yaml
 
-# Clear firewall rules
-echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
-iptables -F
-iptables -X
-iptables -Z
+# Fix firewall drop rule
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
-echo "Done!"
 
 echo -e "\n\n*****************************************"
 echo -e "Kubernetes v1.8.2 installed successfully!"
