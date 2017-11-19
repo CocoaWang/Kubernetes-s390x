@@ -10,7 +10,7 @@
 set -e
 
 # Kubernetes version
-K8S_VERSION=v1.8.2
+K8S_VERSION=v1.8.3
 
 # Clear firewall rules
 echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
@@ -65,7 +65,7 @@ echo -e "\n\n******************************\nInstall k8s cluster by kubeadm\n***
 mkdir $HOME/k8s-${K8S_VERSION}
 kubeadm reset
 systemctl start kubelet
-kubeadm init --skip-preflight-checks --pod-network-cidr=10.244.0.0/16
+kubeadm init --skip-preflight-checks --kubernetes-version ${K8S_VERSION} --pod-network-cidr=10.244.0.0/16
 cp -f /etc/kubernetes/admin.conf $HOME/k8s-${K8S_VERSION}
 chown $(id -u):$(id -g) $HOME/k8s-${K8S_VERSION}/admin.conf
 echo "export KUBECONFIG=$HOME/k8s-${K8S_VERSION}/admin.conf" >> /etc/profile
