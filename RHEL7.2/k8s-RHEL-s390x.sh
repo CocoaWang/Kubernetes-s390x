@@ -2,7 +2,7 @@
 
 # Written by Chenhao Xu
 
-# Install kubernetes with kubeadm v1.8.2 on RHEL7.2 s390x
+# Install kubernetes with kubeadm v1.8.3 on RHEL7.2 s390x
 # You need a good network environment.
 # Please run this bash on root
 # Test passed on LinuxONE Community Cloud
@@ -146,5 +146,5 @@ iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
 
 echo -e "\n\n*****************************************"
-echo -e "Kubernetes v1.8.2 installed successfully!"
+echo -e "Kubernetes ${K8S_VERSION} installed successfully!"
 echo -e "*****************************************\n\n"
