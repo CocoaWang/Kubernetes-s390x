@@ -2,7 +2,7 @@
 
 # Written by Chenhao Xu
 
-# Install kubernetes with kubeadm v1.8.3 on RHEL7.2 s390x
+# Install kubernetes with kubeadm v1.8.4 on RHEL7.4 s390x
 # You need a good network environment.
 # Please run this bash on root
 # Test passed on LinuxONE Community Cloud
@@ -10,7 +10,7 @@
 set -e
 
 # Kubernetes version
-K8S_VERSION=v1.8.3
+K8S_VERSION=v1.8.4
 
 # Clear firewall rules
 echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
@@ -29,8 +29,39 @@ yum install -y ebtables ethtool
 wget ftp://ftp.unicamp.br/pub/linuxpatch/s390x/redhat/rhel7.3/docker-17.05.0-ce-rhel7.3-20170523.tar.gz
 tar -zxf docker-17.05.0-ce-rhel7.3-20170523.tar.gz
 cp ./docker-17.05.0-ce-rhel7.3-20170523/docker* /usr/bin/
-mkdir -p /data
-nohup dockerd -s overlay --data-root /data/docker-runtime > /data/docker.log 2>&1 &
+mkdir -p /data/docker-runtime/
+ln -s /data/docker-runtime/ /var/lib/docker
+cat << EOF > /usr/lib/systemd/system/docker.service
+[Unit]
+Description=Docker Application Container Engine
+Documentation=http://docs.docker.com
+After=network.target
+Wants=docker-storage-setup.service
+
+[Service]
+Type=notify
+EnvironmentFile=-/etc/sysconfig/docker
+EnvironmentFile=-/etc/sysconfig/docker-storage
+EnvironmentFile=-/etc/sysconfig/docker-network
+Environment=GOTRACEBACK=crash
+ExecStart=/usr/bin/docker daemon $OPTIONS \
+      $DOCKER_STORAGE_OPTIONS \
+      $DOCKER_NETWORK_OPTIONS \
+      $ADD_REGISTRY \
+      $BLOCK_REGISTRY \
+      $INSECURE_REGISTRY
+LimitNOFILE=1048576
+LimitNPROC=1048576
+LimitCORE=infinity
+MountFlags=slave
+TimeoutStartSec=1min
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable docker
+systemctl restart docker
 rm -rf docker-17.05.0-ce-rhel7.3-20170523 docker-17.05.0-ce-rhel7.3-20170523.tar.gz
 echo -e "Done!"
 
@@ -65,7 +96,7 @@ echo -e "\n\n******************************\nInstall k8s cluster by kubeadm\n***
 mkdir $HOME/k8s-${K8S_VERSION}
 kubeadm reset
 systemctl start kubelet
-kubeadm init --skip-preflight-checks --kubernetes-version ${K8S_VERSION} --pod-network-cidr=10.244.0.0/16
+kubeadm init --kubernetes-version ${K8S_VERSION} --pod-network-cidr=10.244.0.0/16
 cp -f /etc/kubernetes/admin.conf $HOME/k8s-${K8S_VERSION}
 chown $(id -u):$(id -g) $HOME/k8s-${K8S_VERSION}/admin.conf
 echo "export KUBECONFIG=$HOME/k8s-${K8S_VERSION}/admin.conf" >> /etc/profile
