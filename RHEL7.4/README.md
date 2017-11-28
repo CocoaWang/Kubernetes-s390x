@@ -6,7 +6,7 @@ Here is a `k8s-RHEL-s390x.sh` bash for [Kubernetes](https://kubernetes.io/)' one
 
 ```bash
 $ git clone https://github.com/xuchenhao001/Kubernetes-s390x.git
-$ cd Kubernetes-s390x/RHEL7.2
+$ cd Kubernetes-s390x/RHEL7.4
 $ chmod +x k8s-RHEL-s390x.sh
 $ ./k8s-RHEL-s390x.sh
 ```
@@ -15,7 +15,7 @@ As while as you see :
 
 ```bash
 *****************************************
-Kubernetes v1.8.3 installed successfully!
+Kubernetes v1.8.4 installed successfully!
 *****************************************
 ```
 
