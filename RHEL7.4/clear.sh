@@ -12,3 +12,4 @@ umount $(cat /proc/mounts| grep docker| awk '{print $1}')
 rm -rf /data/docker-runtime /data/docker.log
 rm -rf ~/.kube
 rm -rf ~/k8s-v*
+

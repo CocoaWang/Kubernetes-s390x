@@ -167,3 +167,4 @@ iptables -P OUTPUT ACCEPT
 echo -e "\n\n*****************************************"
 echo -e "Kubernetes ${K8S_VERSION} installed successfully!"
 echo -e "*****************************************\n\n"
+
