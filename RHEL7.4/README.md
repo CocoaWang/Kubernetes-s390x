@@ -15,7 +15,7 @@ As while as you see :
 
 ```bash
 *****************************************
-Kubernetes v1.8.4 installed successfully!
+Kubernetes v1.9.3 installed successfully!
 *****************************************
 ```
 

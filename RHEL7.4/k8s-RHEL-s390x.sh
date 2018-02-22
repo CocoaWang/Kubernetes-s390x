@@ -2,7 +2,7 @@
 
 # Written by Chenhao Xu
 
-# Install kubernetes with kubeadm v1.8.4 on RHEL7.4 s390x
+# Install kubernetes with kubeadm v1.9.3 on RHEL7.4 s390x
 # You need a good network environment.
 # Please run this bash on root
 # Test passed on LinuxONE Community Cloud
@@ -10,7 +10,7 @@
 set -e
 
 # Kubernetes version
-K8S_VERSION=v1.8.4
+K8S_VERSION=v1.9.3
 
 # Clear firewall rules
 echo -e "\n\n********************\nClear firewall rules\n********************\n\n"
@@ -20,7 +20,7 @@ echo "Done!"
 # Turn off swap
 echo -e "\n\n*************\nTurn off swap\n*************\n\n"
 swapoff -a
-free -m
+free -h
 echo -e "\nDone!"
 
 # Install docker
@@ -97,16 +97,14 @@ mkdir $HOME/k8s-${K8S_VERSION}
 kubeadm reset
 systemctl start kubelet
 kubeadm init --kubernetes-version ${K8S_VERSION} --pod-network-cidr=10.244.0.0/16
-cp -f /etc/kubernetes/admin.conf $HOME/k8s-${K8S_VERSION}
-chown $(id -u):$(id -g) $HOME/k8s-${K8S_VERSION}/admin.conf
-echo "export KUBECONFIG=$HOME/k8s-${K8S_VERSION}/admin.conf" >> /etc/profile
-source /etc/profile
+mkdir -p ~/.kube
+cp /etc/kubernetes/admin.conf ~/.kube/config
 kubectl taint nodes --all node-role.kubernetes.io/master-
 echo -e "\nDone!"
 
 # Install flannel
 echo -e "\n\n***************\nInstall flannel\n***************\n\n"
-wget -P $HOME/k8s-${K8S_VERSION}/ https://raw.githubusercontent.com/coreos/flannel/v0.9.0/Documentation/kube-flannel.yml
+wget -P $HOME/k8s-${K8S_VERSION}/ https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml
 sed -i "s/amd64/s390x/g" $HOME/k8s-${K8S_VERSION}/kube-flannel.yml
 kubectl apply -f $HOME/k8s-${K8S_VERSION}/kube-flannel.yml
 echo -e "\nDone!"
@@ -114,21 +112,11 @@ echo -e "\nDone!"
 # Install Kubernetes dashboard
 echo -e "\n\n*****************\nInstall dashboard\n*****************\n\n"
 wget -P $HOME/k8s-${K8S_VERSION}/ https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-sed -i "/Dashboard Secret/,+11s/^/#/" $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
-sed -i "/initContainers:/,+5s/^/#/" $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
 sed -i "s/amd64/s390x/g" $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
 sed -i "/targetPort: 8443/a\\      nodePort: 31117\n  type: NodePort" $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
-sed -i "/dashboard.crt/a\\          - --authentication-mode=basic" $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
-echo -e "Done!"
-
-# Create secrets for dashboard
-echo -e "\n\nCreate secrets\n**************\n\n"
-mkdir -p $HOME/k8s-${K8S_VERSION}/certs
-openssl req -nodes -newkey rsa:2048 -keyout $HOME/k8s-${K8S_VERSION}/certs/dashboard.key -out $HOME/k8s-${K8S_VERSION}/certs/dashboard.csr -subj "/C=/ST=/L=/O=/OU=/CN=kubernetes-dashboard"
-openssl x509 -req -sha256 -days 365 -in $HOME/k8s-${K8S_VERSION}/certs/dashboard.csr -signkey $HOME/k8s-${K8S_VERSION}/certs/dashboard.key -out $HOME/k8s-${K8S_VERSION}/certs/dashboard.crt
-kubectl create secret generic kubernetes-dashboard-certs --from-file=$HOME/k8s-${K8S_VERSION}/certs -n kube-system
+sed -i "/--auto-generate-certificates/a\\          - --authentication-mode=basic" $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
 kubectl apply -f $HOME/k8s-${K8S_VERSION}/kubernetes-dashboard.yaml
-echo -e "\nDone!"
+echo -e "Done!"
 
 # Create user/password authentication & authorization for k8s
 echo -e "\n\nCreate user/password\n********************\n"
@@ -141,7 +129,7 @@ echo -e "Done!"
 echo -e "\n\nWaiting for apiserver running"
 APISERVERSTATUS=$(ps -ef| grep apiserver| grep basic-auth-file| wc -l)
 until [ "${APISERVERSTATUS}" == "1" ]; do
-  sleep 1
+  sleep 10
   printf "*"
   APISERVERSTATUS=$(ps -ef| grep apiserver| grep basic-auth-file| wc -l)
 done
@@ -150,7 +138,7 @@ echo -e "\n\nDone!"
 echo -e "\n\nWaiting for pods running"
 PODSSTATUS=$(kubectl get pods -n kube-system 2>/dev/null| grep Running| wc -l)
 until [ "${PODSSTATUS}" == "8" ]; do
-  sleep 1
+  sleep 10
   printf "*"
   PODSSTATUS=$(kubectl get pods -n kube-system 2>/dev/null| grep Running| wc -l)
 done
